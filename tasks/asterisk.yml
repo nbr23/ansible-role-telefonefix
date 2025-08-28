@@ -1,0 +1,114 @@
+---
+- name: Uninstall old versions of Docker
+  ansible.builtin.apt:
+    name:
+      - docker.io
+      - docker-doc
+      - docker-compose
+      - docker-compose-v2
+      - podman-docker
+      - containerd
+      - runc
+    state: absent
+  ignore_errors: yes
+
+- name: Install packages to allow apt to use a repository over HTTPS
+  ansible.builtin.apt:
+    cache_valid_time: 300
+    name:
+      - ca-certificates
+      - curl
+    state: present
+
+- name: Create directory for apt keyrings
+  file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+
+- name: Add Docker's official GPG key
+  shell: |
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+    chmod a+r /etc/apt/keyrings/docker.gpg
+  args:
+    creates: /etc/apt/keyrings/docker.gpg
+
+- name: Set up the Docker repository
+  shell: |
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+  args:
+    creates: /etc/apt/sources.list.d/docker.list
+
+- name: Install Docker Engine, containerd, and Docker Compose
+  ansible.builtin.apt:
+    cache_valid_time: 0
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+    state: present
+
+- name: Start and enable Docker service
+  systemd:
+    name: docker
+    state: started
+    enabled: yes
+
+- name: Add current user to docker group
+  user:
+    name: "{{ ansible_user }}"
+    groups: docker
+    append: yes
+  when: ansible_user != "root"
+
+- name: Pull Asterisk Docker image
+  docker_image:
+    name: nbr23/asterisk
+    source: pull
+    state: present
+
+- name: Create Asterisk config directory on remote host
+  file:
+    path: /opt/asterisk/config
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Deploy Asterisk configuration templates
+  template:
+    src: "asterisk/{{ item }}"
+    dest: "/opt/asterisk/config/{{ item | basename }}"
+    owner: root
+    group: root
+    mode: '0644'
+    backup: yes
+  loop: "{{ mounted_config_files }}"
+
+- name: Create volume mount list for Docker container
+  set_fact:
+    docker_volumes: "{{ docker_volumes | default([]) + ['/opt/asterisk/config/' + item + ':/etc/asterisk/' + item + ':rw'] }}"
+  loop: "{{ mounted_config_files }}"
+
+- name: Copy allo-wed config
+  copy:
+    src: asterisk/allo-wed.yml
+    dest: /opt/asterisk/allo-wed.yml
+    mode: '755'
+  become: true
+
+- name: Set base volumes for Asterisk container
+  set_fact:
+    asterisk_volumes: "{{ docker_volumes + ['/var/lib/asterisk/sounds/extra:/var/lib/asterisk/sounds/extra'] + ['/opt/asterisk/allo-wed.yml:/opt/asterisk/allo-wed.yml'] }}"
+
+- name: Run Asterisk container
+  docker_container:
+    name: asterisk
+    image: nbr23/allo-wed:asterisk
+    state: started
+    restart: true
+    restart_policy: unless-stopped
+    network_mode: host
+    volumes: "{{ asterisk_volumes }}"

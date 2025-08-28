@@ -30,7 +30,10 @@ The following variables can be configured in your playbook or inventory:
     ht801_mac: "00:11:22:33:44:55"
     ht801_static_ip: "192.168.100.50"
   tasks:
-    - include_tasks: tasks/dhcp.yml
+    - name: DHCP config
+      include_role:
+        name: ansible-role-telefonefix
+        tasks_from: dhcp.yml
 ```
 
 ### What it does
@@ -40,3 +43,52 @@ The following variables can be configured in your playbook or inventory:
 3. Sets up a DHCP server on that interface
 4. Creates a static lease for the HT801 device
 5. Restarts networking services and displays the interface configuration
+
+## Asterisk Configuration Task
+
+The `asterisk` task installs Docker and deploys an Asterisk container configured to work with Twilio SIP trunking for telephony services.
+
+### Variables
+
+The following variables can be configured in your playbook or inventory:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `public_ip` | `""` | **Required:** Public IP address of your server |
+| `asterisk_phone_user` | `"6001"` | SIP phone user/extension number |
+| `asterisk_phone_password` | `""` | **Required:** Password for the SIP phone user |
+| `twilio_domaine` | `""` | **Required:** Twilio SIP domain |
+| `twilio_phone_number` | `""` | **Required:** Twilio phone number |
+| `twilio_user` | `""` | **Required:** Twilio SIP username |
+| `twilio_password` | `""` | **Required:** Twilio SIP password |
+| `mounted_config_files` | `["pjsip.conf", "rtp.conf", "extensions.conf"]` | Configuration files to push and mount in container |
+
+### Example Usage
+
+```yaml
+- hosts: asterisk_server
+  become: yes
+  vars:
+    public_ip: "192.168.1.100"
+    asterisk_phone_password: "secure_password"
+    twilio_domaine: "your-twilio-domain.pstn.twilio.com"
+    twilio_phone_number: "+15555555555"
+    twilio_user: "your_twilio_username"
+    twilio_password: "your_twilio_password"
+  tasks:
+    - name: Asterisk setup
+      include_role:
+        name: ansible-role-telefonefix
+        tasks_from: asterisk.yml
+```
+
+### What it does
+
+1. Uninstalls any existing Docker packages
+2. Installs Docker CE from the official Docker repository
+3. Starts and enables the Docker service
+4. Adds the current user to the docker group
+5. Creates the Asterisk configuration directory
+6. Deploys templated configuration files (pjsip.conf, rtp.conf, extensions.conf)
+7. Copies the [allo-wed](https://github.com/nbr23/allo-wed) configuration
+8. Runs the Asterisk container with proper volume mounts and network configuration

@@ -16,3 +16,18 @@ dns_servers:
 
 # Network interface to configure
 ethernet_interface: "eth0"
+
+# Asterisk configuration - REQUIRED: Set these values for your setup
+public_ip: ""
+asterisk_phone_user: "6001"
+asterisk_phone_password: ""
+twilio_domaine: ""
+twilio_phone_number: ""
+twilio_user: ""
+twilio_password: ""
+
+# Asterisk configuration files to mount in container
+mounted_config_files:
+  - pjsip.conf
+  - rtp.conf
+  - extensions.conf
