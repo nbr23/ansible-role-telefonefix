@@ -1,0 +1,66 @@
+---
+- name: Ensure systemd-networkd is installed and enabled
+  systemd:
+    name: systemd-networkd
+    enabled: yes
+    state: started
+
+- name: Create systemd-networkd configuration directory
+  file:
+    path: /etc/systemd/network
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Configure ethernet interface with DHCP server
+  copy:
+    dest: "/etc/systemd/network/10-{{ ethernet_interface }}.network"
+    owner: root
+    group: root
+    mode: '0644'
+    content: |
+      [Match]
+      Name={{ ethernet_interface }}
+
+      [Network]
+      Address={{ gateway_ip }}/{{ network_subnet.split('/')[1] }}
+      DHCPServer=yes
+
+      [DHCPServer]
+      PoolOffset={{ dhcp_pool_start_offset }}
+      PoolSize={{ dhcp_pool_size }}
+      DefaultLeaseTimeSec=43200
+      {% for dns in dns_servers %}
+      DNS={{ dns }}
+      {% endfor %}
+
+      [DHCPServerStaticLease]
+      MACAddress={{ ht801_mac }}
+      Address={{ ht801_static_ip }}
+  notify:
+    - restart systemd-networkd
+
+- name: Enable systemd-networkd-wait-online service
+  systemd:
+    name: systemd-networkd-wait-online
+    enabled: yes
+
+- name: Restart systemd-networkd immediately
+  systemd:
+    name: systemd-networkd
+    state: restarted
+    daemon_reload: yes
+
+- name: Wait for interface to be configured
+  wait_for:
+    timeout: 10
+
+- name: Display network configuration
+  command: ip addr show {{ ethernet_interface }}
+  register: interface_config
+  changed_when: false
+
+- name: Show interface configuration
+  debug:
+    msg: "{{ interface_config.stdout_lines }}"

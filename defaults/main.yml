@@ -1,0 +1,18 @@
+---
+# Network configuration for Raspberry Pi DHCP server
+network_subnet: "192.168.100.0/24"
+gateway_ip: "192.168.100.1"
+dhcp_pool_start_offset: 10
+dhcp_pool_size: 40
+
+# HT801 device configuration - REQUIRED: Set these values for your device
+ht801_mac: ""
+ht801_static_ip: ""
+
+# DNS servers for DHCP clients
+dns_servers:
+  - "8.8.8.8"
+  - "8.8.4.4"
+
+# Network interface to configure
+ethernet_interface: "eth0"
