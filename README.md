@@ -2,93 +2,107 @@
 
 Setup ansible role for téléfonefix
 
-## DHCP Configuration Task
+This Ansible role sets up a Raspberry Pi (or alike) as a DHCP server, deploys Asterisk with Twilio integration, and configures an HT801 analogue telephone adapter to connect to Asterisk. The role includes three main tasks described below.
 
-The `dhcp` task configures a Raspberry Pi to act as a DHCP server for the HT801 device, providing network configuration and assigning a static IP address to the device based on its MAC address.
+## Tasks Overview
 
-### Variables
+1. **DHCP Configuration** (`dhcp.yml`) - Configures Raspberry Pi as DHCP server for HT801
+2. **Asterisk Setup** (`asterisk.yml`) - Installs Docker and deploys Asterisk container with Twilio
+3. **HT801 Configuration** (`ht801.yml`) - Configures HT801 device via its API
 
-The following variables can be configured in your playbook or inventory:
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `network_subnet` | `192.168.100.0/24` | Network subnet for the DHCP server |
-| `gateway_ip` | `192.168.100.1` | Gateway IP address for the Raspberry Pi |
-| `dhcp_pool_start_offset` | `10` | Starting offset for DHCP pool (e.g., 10 = .10) |
-| `dhcp_pool_size` | `40` | Number of addresses in DHCP pool |
-| `ht801_mac` | `""` | MAC address of the HT801 device |
-| `ht801_static_ip` | `""` | Static IP to assign to the HT801 device |
-| `dns_servers` | `["8.8.8.8", "8.8.4.4"]` | DNS servers for DHCP clients |
-| `ethernet_interface` | `eth0` | Ethernet interface to configure |
-
-### Example Usage
+## Example
 
 ```yaml
+---
 - hosts: raspberry_pi
   become: yes
   vars:
+    # Network configuration
+    network_subnet: "192.168.100.0/24"
+    gateway_ip: "192.168.100.1"
+    ethernet_interface: "eth0"
+    
+    # HT801 device configuration
     ht801_mac: "00:11:22:33:44:55"
     ht801_static_ip: "192.168.100.50"
+    ht801_password: "admin"
+    
+    # Asterisk configuration
+    public_ip: ""  # Your public IP
+    asterisk_phone_user: "6001"
+    asterisk_phone_password: "secure_phone_password"
+    
+    # Twilio configuration
+    twilio_domaine: "your-domain.pstn.twilio.com"
+    twilio_phone_number: "+15555551234"
+    twilio_user: "your_twilio_username"
+    twilio_password: "your_twilio_password"
+    
+    # HT801 SIP configuration (optional overrides)
+    ht801_primary_sip_server: "{{ gateway_ip }}"
+    ht801_sip_user_id: "{{ asterisk_phone_user }}"
+    ht801_sip_authenticate_id: "{{ asterisk_phone_user }}"
+    ht801_sip_authentication_password: "{{ asterisk_phone_password }}"
+    
   tasks:
-    - name: DHCP config
+    - name: Configure DHCP server
       include_role:
         name: ansible-role-telefonefix
         tasks_from: dhcp.yml
-```
-
-### What it does
-
-1. Installs and enables systemd-networkd
-2. Configures the specified ethernet interface with a static IP
-3. Sets up a DHCP server on that interface
-4. Creates a static lease for the HT801 device
-5. Restarts networking services and displays the interface configuration
-
-## Asterisk Configuration Task
-
-The `asterisk` task installs Docker and deploys an Asterisk container configured to work with Twilio SIP trunking for telephony services.
-
-### Variables
-
-The following variables can be configured in your playbook or inventory:
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `public_ip` | `""` | **Required:** Public IP address of your server |
-| `asterisk_phone_user` | `"6001"` | SIP phone user/extension number |
-| `asterisk_phone_password` | `""` | **Required:** Password for the SIP phone user |
-| `twilio_domaine` | `""` | **Required:** Twilio SIP domain |
-| `twilio_phone_number` | `""` | **Required:** Twilio phone number |
-| `twilio_user` | `""` | **Required:** Twilio SIP username |
-| `twilio_password` | `""` | **Required:** Twilio SIP password |
-| `mounted_config_files` | `["pjsip.conf", "rtp.conf", "extensions.conf"]` | Configuration files to push and mount in container |
-
-### Example Usage
-
-```yaml
-- hosts: asterisk_server
-  become: yes
-  vars:
-    public_ip: "192.168.1.100"
-    asterisk_phone_password: "secure_password"
-    twilio_domaine: "your-twilio-domain.pstn.twilio.com"
-    twilio_phone_number: "+15555555555"
-    twilio_user: "your_twilio_username"
-    twilio_password: "your_twilio_password"
-  tasks:
-    - name: Asterisk setup
+    
+    - name: Setup Asterisk with Twilio
       include_role:
         name: ansible-role-telefonefix
         tasks_from: asterisk.yml
+    
+    - name: Configure HT801 device
+      include_role:
+        name: ansible-role-telefonefix
+        tasks_from: ht801.yml
 ```
 
-### What it does
+## Task Details
 
-1. Uninstalls any existing Docker packages
-2. Installs Docker CE from the official Docker repository
-3. Starts and enables the Docker service
-4. Adds the current user to the docker group
-5. Creates the Asterisk configuration directory
-6. Deploys templated configuration files (pjsip.conf, rtp.conf, extensions.conf)
-7. Copies the [allo-wed](https://github.com/nbr23/allo-wed) configuration
-8. Runs the Asterisk container with proper volume mounts and network configuration
+### DHCP Configuration Task (`dhcp.yml`)
+
+Configures the target to act as a DHCP server for the HT801 device.
+
+**Key Variables:**
+- `network_subnet`: Network subnet (default: `192.168.100.0/24`)
+- `gateway_ip`: Gateway IP address (default: `192.168.100.1`)
+- `ht801_mac`: MAC address of HT801 device (**required**)
+- `ht801_static_ip`: Static IP for HT801 (**required**)
+- `ethernet_interface`: Interface to configure (default: `eth0`)
+
+### Asterisk Configuration Task (`asterisk.yml`)
+
+Installs Docker and deploys an Asterisk container (using the image from https://github.com/nbr23/docker-asterisk) with Twilio SIP trunking.
+
+**Key Variables:**
+- `public_ip`: Your server's public IP (**required**)
+- `asterisk_phone_user`: SIP extension (default: `6001`)
+- `asterisk_phone_password`: SIP password (**required**)
+- `twilio_domaine`: Twilio SIP domain (**required**)
+- `twilio_phone_number`: Your Twilio number (**required**)
+- `twilio_user`: Twilio SIP username (**required**)
+- `twilio_password`: Twilio SIP password (**required**)
+
+### HT801 Configuration Task (`ht801.yml`)
+
+Configures the HT801's FTX port
+
+**Key Variables:**
+- `ht801_password`: Admin password for HT801 (**required**)
+- `ht801_primary_sip_server`: Primary SIP server (default: `gateway_ip`)
+- `ht801_sip_user_id`: SIP user ID (default: `asterisk_phone_user`)
+- `ht801_sip_authenticate_id`: SIP auth ID (default: `asterisk_phone_user`)
+- `ht801_sip_authentication_password`: SIP password (default: `asterisk_phone_password`)
+
+```
+
+## What This Role Does
+
+1. **Network Setup**: Configures Raspberry Pi as DHCP server with static lease for HT801
+2. **Telephony Backend**: Deploys Asterisk container with Twilio SIP trunk integration
+3. **Device Configuration**: Automatically configures HT801 to connect to Asterisk
+4. **Complete Integration**: Creates a working phone system connecting analog phones to Twilio
