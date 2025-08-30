@@ -1,0 +1,84 @@
+---
+- name: Login to HT801 and get session token
+  uri:
+    url: "http://{{ ht801_static_ip }}/cgi-bin/dologin"
+    method: POST
+    headers:
+      Accept: "application/json, text/plain, */*"
+      Accept-Encoding: "gzip, deflate"
+      Content-Type: "application/x-www-form-urlencoded"
+      X-Requested-With: "XMLHttpRequest"
+      Origin: "http://{{ ht801_static_ip }}"
+      Connection: "keep-alive"
+      Referer: "http://{{ ht801_static_ip }}/login"
+      Priority: "u=0"
+    body: "username=admin&P2={{ ht801_password | b64encode }}"
+    return_content: yes
+  register: login_response
+
+- name: Extract session token from login response
+  set_fact:
+    session_token: "{{ (login_response.content | from_json).body.session_token }}"
+
+- name: Extract session cookie from login response
+  set_fact:
+    session_cookie: "{{ login_response.set_cookie.split(';')[0].split('=')[1] }}"
+
+- name: Debug session token and cookie
+  debug:
+    msg: 
+      - "Session token: {{ session_token }}"
+      - "Session cookie: {{ session_cookie }}"
+
+- name: Set default HT801 configuration values
+  set_fact:
+    ht801_config:
+      account_active: "{{ ht801_account_active | default('1') }}"
+      primary_sip_server: "{{ ht801_primary_sip_server | default(gateway_ip) }}"
+      failover_sip_server: "{{ ht801_failover_sip_server | default('') }}"
+      prefer_primary_sip_server: "{{ ht801_prefer_primary_sip_server | default('0') }}"
+      outbound_proxy: "{{ ht801_outbound_proxy | default('') }}"
+      backup_outbound_proxy: "{{ ht801_backup_outbound_proxy | default('') }}"
+      prefer_primary_outbound_proxy: "{{ ht801_prefer_primary_outbound_proxy | default('0') }}"
+      from_domain: "{{ ht801_from_domain | default('') }}"
+      allow_dhcp_option_120_to_override_sip_server: "{{ ht801_allow_dhcp_option_120_to_override_sip_server | default('0') }}"
+      sip_user_id: "{{ ht801_sip_user_id | default(asterisk_phone_user) }}"
+      sip_authenticate_id: "{{ ht801_sip_authenticate_id | default(asterisk_phone_user) }}"
+      sip_authentication_password: "{{ ht801_sip_authentication_password | default(asterisk_phone_password) }}"
+      name: "{{ ht801_name | default('') }}"
+      tel_uri: "{{ ht801_tel_uri | default('0') }}"
+      layer_3_qos_sip_dscp: "{{ ht801_layer_3_qos_sip_dscp | default('26') }}"
+      layer_3_qos_rtp_dscp: "{{ ht801_layer_3_qos_rtp_dscp | default('46') }}"
+      dns_mode: "{{ ht801_dns_mode | default('0') }}"
+      dns_srv_failover_mode: "{{ ht801_dns_srv_failover_mode | default('0') }}"
+      failback_timer: "{{ ht801_failback_timer | default('60') }}"
+      maximum_number_of_sip_request_retries: "{{ ht801_maximum_number_of_sip_request_retries | default('2') }}"
+      register_before_dns_srv_failover: "{{ ht801_register_before_dns_srv_failover | default('0') }}"
+      primary_ip: "{{ ht801_primary_ip | default('') }}"
+      backup_ip_1: "{{ ht801_backup_ip_1 | default('') }}"
+      backup_ip_2: "{{ ht801_backup_ip_2 | default('') }}"
+      nat_traversal: "{{ ht801_nat_traversal | default('2') }}"
+      use_nat_ip: "{{ ht801_use_nat_ip | default('') }}"
+      proxy_require: "{{ ht801_proxy_require | default('') }}"
+
+- name: Apply FTX Port configuration
+  uri:
+    url: "http://{{ ht801_static_ip }}/cgi-bin/api.values.post"
+    method: POST
+    headers:
+      Accept: "application/json, text/plain, */*"
+      Accept-Encoding: "gzip, deflate"
+      Content-Type: "application/x-www-form-urlencoded"
+      X-Requested-With: "XMLHttpRequest"
+      Origin: "http://{{ ht801_static_ip }}"
+      Connection: "keep-alive"
+      Referer: "http://{{ ht801_static_ip }}/portSetting/1/general"
+      Cookie: "session_id={{ session_cookie }}"
+    body: "P271={{ ht801_config.account_active }}&P47={{ ht801_config.primary_sip_server }}&P967={{ ht801_config.failover_sip_server }}&P4567={{ ht801_config.prefer_primary_sip_server }}&P48={{ ht801_config.outbound_proxy }}&P2333={{ ht801_config.backup_outbound_proxy }}&P28096={{ ht801_config.prefer_primary_outbound_proxy }}&P8617={{ ht801_config.from_domain }}&P1411={{ ht801_config.allow_dhcp_option_120_to_override_sip_server }}&P35={{ ht801_config.sip_user_id }}&P36={{ ht801_config.sip_authenticate_id }}&P34={{ ht801_config.sip_authentication_password }}&P3={{ ht801_config.name }}&P63={{ ht801_config.tel_uri }}&P5046={{ ht801_config.layer_3_qos_sip_dscp }}&P5050={{ ht801_config.layer_3_qos_rtp_dscp }}&P103={{ ht801_config.dns_mode }}&P26040={{ ht801_config.dns_srv_failover_mode }}&P60056={{ ht801_config.failback_timer }}&P60055={{ ht801_config.maximum_number_of_sip_request_retries }}&P29095={{ ht801_config.register_before_dns_srv_failover }}&P2308={{ ht801_config.primary_ip }}&P2309={{ ht801_config.backup_ip_1 }}&P2310={{ ht801_config.backup_ip_2 }}&P52={{ ht801_config.nat_traversal }}&P101={{ ht801_config.use_nat_ip }}&P197={{ ht801_config.proxy_require }}&apply=1&session_token={{ session_token }}"
+    return_content: yes
+  register: config_response
+
+- name: Check configuration response
+  fail:
+    msg: "HT801 configuration failed: {{ (config_response.content | from_json).response }}"
+  when: (config_response.content | from_json).response != "success"
