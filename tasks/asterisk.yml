@@ -63,12 +63,6 @@
     append: yes
   when: ansible_user != "root"
 
-- name: Pull Asterisk Docker image
-  docker_image:
-    name: nbr23/asterisk
-    source: pull
-    state: present
-
 - name: Create Asterisk config directory on remote host
   file:
     path: /opt/asterisk/config
@@ -108,6 +102,7 @@
     name: asterisk
     image: nbr23/allo-wed:asterisk
     state: started
+    pull: always
     restart: true
     restart_policy: unless-stopped
     network_mode: host
