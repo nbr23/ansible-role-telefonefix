@@ -93,6 +93,25 @@
     mode: '755'
   become: true
 
+- name: Create Asterisk sounds directory on remote host
+  file:
+    path: /var/lib/asterisk/sounds/extra
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  become: true
+
+- name: Copy extra sounds folder to remote target
+  copy:
+    src: "{{ asterisk_extra_sounds_folder }}/"
+    dest: /var/lib/asterisk/sounds/extra/
+    owner: root
+    group: root
+    mode: '0644'
+  become: true
+  when: asterisk_extra_sounds_folder is defined
+
 - name: Set base volumes for Asterisk container
   set_fact:
     asterisk_volumes: "{{ docker_volumes + ['/var/lib/asterisk/sounds/extra:/var/lib/asterisk/sounds/extra'] + ['/opt/asterisk/allo-wed.yml:/opt/asterisk/allo-wed.yml'] }}"

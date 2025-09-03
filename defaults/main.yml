@@ -31,3 +31,28 @@ mounted_config_files:
   - pjsip.conf
   - rtp.conf
   - extensions.conf
+
+# TTS Playback generation configuration
+asterisk_playback_patterns:
+  connecting:
+    en: "Connecting you to ${contact_name}"
+    fr: "Connexion vers ${contact_name}"
+  not-allowed:
+    en: "Calls to ${contact_name} are not allowed at this time"
+    fr: "Les appels vers ${contact_name} ne sont pas autorisés en ce moment"
+  currently-busy:
+    en: "${contact_name} is currently busy"
+    fr: "${contact_name} est occupé"
+  unavailable:
+    en: "${contact_name} is currently unavailable"
+    fr: "${contact_name} n'est pas disponible"
+
+# Voice mapping for different languages
+voice_map:
+  en: "en_US-amy-low"
+  fr: "fr_FR-siwis-low"
+  pt: "pt_BR-cadu-medium"
+
+# TTS container configuration
+tts_container_name: "telefonefix-tts-temp"
+tts_container_port: 8080

@@ -1,0 +1,114 @@
+---
+- name: Generate TTS playback files for Asterisk (runs locally)
+  delegate_to: localhost
+  run_once: true
+  become: false
+  block:
+    - name: Install requests for docker operations
+      pip:
+        name: requests
+        state: present
+      delegate_to: localhost
+
+    - name: Copy allo-wed configuration to temporary location
+      copy:
+        src: asterisk/allo-wed.yml
+        dest: /tmp/allo-wed.yml
+        mode: '0644'
+      delegate_to: localhost
+
+    - name: Load allo-wed configuration
+      include_vars:
+        file: /tmp/allo-wed.yml
+        name: allo_wed_config
+      delegate_to: localhost
+
+    - name: Create local sounds directory structure
+      file:
+        path: "{{ asterisk_extra_sounds_folder }}/{{ extension.value.ext }}"
+        state: directory
+        mode: '0755'
+      loop: "{{ allo_wed_config.extensions | dict2items }}"
+      loop_control:
+        loop_var: extension
+      delegate_to: localhost
+
+    - name: Start TTS API container locally
+      docker_container:
+        name: "{{ tts_container_name }}"
+        image: nbr23/gopipertts:latest
+        state: started
+        ports:
+          - "{{ tts_container_port }}:8080"
+        volumes:
+          - ".voices:/voices"
+        pull: true
+        restart_policy: no
+      delegate_to: localhost
+
+    - name: Wait for TTS API to be ready
+      uri:
+        url: "http://localhost:{{ tts_container_port }}/api/tts?voice=en_US-amy-low&speed=1.0&text=test"
+        method: GET
+        status_code: 200
+      register: health_check
+      until: health_check.status == 200
+      retries: 30
+      delay: 2
+      failed_when: false
+      delegate_to: localhost
+
+    - name: Deploy TTS generation script locally
+      copy:
+        src: tts_generator.py
+        dest: /tmp/tts_generator.py
+        mode: '0755'
+      delegate_to: localhost
+
+    - name: Generate audio files for each extension and pattern combination
+      command: >
+        uv run --script /tmp/tts_generator.py
+        -v "{{ voice_map[extension.value.language] | default(voice_map.en) }}"
+        -u "http://localhost:{{ tts_container_port }}"
+        -o "{{ asterisk_extra_sounds_folder }}/{{ extension.value.ext }}/{{ pattern.key }}"
+        "{{ pattern.value[extension.value.language] | default(pattern.value.en) | replace('${contact_name}', extension.value.contact_name | default(extension.value.ext)) }}"
+      loop: "{{ allo_wed_config.extensions | dict2items | product(asterisk_playback_patterns | dict2items) | list }}"
+      loop_control:
+        loop_var: item
+      vars:
+        extension: "{{ item[0] }}"
+        pattern: "{{ item[1] }}"
+      register: tts_generation_results
+      failed_when: tts_generation_results.rc != 0
+      delegate_to: localhost
+
+    - name: Display generation summary
+      debug:
+        msg: "Generated {{ tts_generation_results.results | length }} TTS files in {{ asterisk_extra_sounds_folder }}/"
+      delegate_to: localhost
+
+  always:
+    - name: Stop and remove TTS container
+      docker_container:
+        name: "{{ tts_container_name }}"
+        state: absent
+      ignore_errors: yes
+      delegate_to: localhost
+      become: false
+
+    - name: Clean up temporary TTS script
+      file:
+        path: /tmp/tts_generator.py
+        state: absent
+      ignore_errors: yes
+      delegate_to: localhost
+      become: false
+
+    - name: Clean up temporary allo-wed configuration
+      file:
+        path: /tmp/allo-wed.yml
+        state: absent
+      ignore_errors: yes
+      delegate_to: localhost
+      become: false
+
