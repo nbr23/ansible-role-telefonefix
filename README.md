@@ -108,6 +108,7 @@ Installs Docker and deploys an Asterisk container (using the image from https://
 - `twilio_user`: Twilio SIP username (**required**)
 - `twilio_password`: Twilio SIP password (**required**)
 - `asterisk_extra_sounds_folder`: Local path to additional sound files to copy into Asterisk container (optional)
+- `super_user_override_prefix`: Prefix for bypassing time restrictions (optional) - if set, allows calling extensions regardless of allowed hours by prefixing the extension with this value (e.g., if set to "23", dialing 23101 will call extension 101 bypassing time restrictions)
 
 ### HT801 Configuration Task (`ht801.yml`)
 
