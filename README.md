@@ -108,6 +108,7 @@ Installs Docker and deploys an Asterisk container (using the image from https://
 - `telefonefix_twilio_user`: Twilio SIP username (**required**)
 - `telefonefix_twilio_password`: Twilio SIP password (**required**)
 - `telefonefix_asterisk_extra_sounds_folder`: Local path to additional sound files to copy into Asterisk container (optional)
+- `telefonefix_call_duration_limit_minutes`: Maximum call duration in minutes (default: 60 minutes)
 - `telefonefix_super_user_override_prefix`: Prefix for bypassing time restrictions (optional) - if set, allows calling extensions regardless of allowed hours by prefixing the extension with this value (e.g., if set to "23", dialing 23101 will call extension 101 bypassing time restrictions)
 
 ### HT801 Configuration Task (`ht801.yml`)

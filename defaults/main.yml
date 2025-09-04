@@ -57,6 +57,9 @@ telefonefix_voice_map:
 telefonefix_tts_container_name: "telefonefix-tts-temp"
 telefonefix_tts_container_port: 8080
 
+# Call duration limit in minutes (default: 60 minutes)
+telefonefix_call_duration_limit_minutes: 60
+
 # Super user override prefix (optional) - if set, allows bypassing time restrictions
 # Example: if set to "23", dialing 23101 will call extension 101 regardless of allowed hours
 # telefonefix_super_user_override_prefix: "23"
