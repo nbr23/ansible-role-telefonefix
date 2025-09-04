@@ -79,12 +79,12 @@
     group: root
     mode: '0644'
     backup: yes
-  loop: "{{ mounted_config_files }}"
+  loop: "{{ telefonefix_mounted_config_files }}"
 
 - name: Create volume mount list for Docker container
   set_fact:
     docker_volumes: "{{ docker_volumes | default([]) + ['/opt/asterisk/config/' + item + ':/etc/asterisk/' + item + ':rw'] }}"
-  loop: "{{ mounted_config_files }}"
+  loop: "{{ telefonefix_mounted_config_files }}"
 
 - name: Copy allo-wed config
   copy:
@@ -104,13 +104,13 @@
 
 - name: Copy extra sounds folder to remote target
   copy:
-    src: "{{ asterisk_extra_sounds_folder }}/"
+    src: "{{ telefonefix_asterisk_extra_sounds_folder }}/"
     dest: /var/lib/asterisk/sounds/extra/
     owner: root
     group: root
     mode: '0644'
   become: true
-  when: asterisk_extra_sounds_folder is defined
+  when: telefonefix_asterisk_extra_sounds_folder is defined
 
 - name: Set base volumes for Asterisk container
   set_fact:

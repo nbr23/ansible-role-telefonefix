@@ -19,9 +19,9 @@ This Ansible role sets up a Raspberry Pi (or alike) as a DHCP server, deploys As
   become: yes
   vars:
     # Network configuration
-    network_subnet: "192.168.100.0/24"
-    gateway_ip: "192.168.100.1"
-    ethernet_interface: "eth0"
+    telefonefix_network_subnet: "192.168.100.0/24"
+    telefonefix_gateway_ip: "192.168.100.1"
+    telefonefix_ethernet_interface: "eth0"
     
     # HT801 device configuration
     ht801_mac: "00:11:22:33:44:55"
@@ -29,24 +29,24 @@ This Ansible role sets up a Raspberry Pi (or alike) as a DHCP server, deploys As
     ht801_password: "admin"
     
     # Asterisk configuration
-    public_ip: ""  # Your public IP
-    asterisk_phone_user: "6001"
-    asterisk_phone_password: "secure_phone_password"
+    telefonefix_public_ip: ""  # Your public IP
+    telefonefix_asterisk_phone_user: "6001"
+    telefonefix_asterisk_phone_password: "secure_phone_password"
     
     # Twilio configuration
-    twilio_domaine: "your-domain.pstn.twilio.com"
-    twilio_phone_number: "+15555551234"
-    twilio_user: "your_twilio_username"
-    twilio_password: "your_twilio_password"
+    telefonefix_twilio_domaine: "your-domain.pstn.twilio.com"
+    telefonefix_twilio_phone_number: "+15555551234"
+    telefonefix_twilio_user: "your_twilio_username"
+    telefonefix_twilio_password: "your_twilio_password"
     
     # HT801 SIP configuration (optional overrides)
-    ht801_primary_sip_server: "{{ gateway_ip }}"
-    ht801_sip_user_id: "{{ asterisk_phone_user }}"
-    ht801_sip_authenticate_id: "{{ asterisk_phone_user }}"
-    ht801_sip_authentication_password: "{{ asterisk_phone_password }}"
+    ht801_primary_sip_server: "{{ telefonefix_gateway_ip }}"
+    ht801_sip_user_id: "{{ telefonefix_asterisk_phone_user }}"
+    ht801_sip_authenticate_id: "{{ telefonefix_asterisk_phone_user }}"
+    ht801_sip_authentication_password: "{{ telefonefix_asterisk_phone_password }}"
     
     # TTS Playbacks configuration (optional)
-    asterisk_playback_patterns:
+    telefonefix_asterisk_playback_patterns:
       connecting:
         en: "Connecting you to ${contact_name}"
         fr: "Connexion vers ${contact_name}"
@@ -89,26 +89,26 @@ This Ansible role sets up a Raspberry Pi (or alike) as a DHCP server, deploys As
 Configures the target to act as a DHCP server for the HT801 device.
 
 **Key Variables:**
-- `network_subnet`: Network subnet (default: `192.168.100.0/24`)
-- `gateway_ip`: Gateway IP address (default: `192.168.100.1`)
+- `telefonefix_network_subnet`: Network subnet (default: `192.168.100.0/24`)
+- `telefonefix_gateway_ip`: Gateway IP address (default: `192.168.100.1`)
 - `ht801_mac`: MAC address of HT801 device (**required**)
 - `ht801_static_ip`: Static IP for HT801 (**required**)
-- `ethernet_interface`: Interface to configure (default: `eth0`)
+- `telefonefix_ethernet_interface`: Interface to configure (default: `eth0`)
 
 ### Asterisk Configuration Task (`asterisk.yml`)
 
 Installs Docker and deploys an Asterisk container (using the image from https://github.com/nbr23/docker-asterisk) with Twilio SIP trunking.
 
 **Key Variables:**
-- `public_ip`: Your server's public IP (**required**)
-- `asterisk_phone_user`: SIP extension (default: `6001`)
-- `asterisk_phone_password`: SIP password (**required**)
-- `twilio_domaine`: Twilio SIP domain (**required**)
-- `twilio_phone_number`: Your Twilio number (**required**)
-- `twilio_user`: Twilio SIP username (**required**)
-- `twilio_password`: Twilio SIP password (**required**)
-- `asterisk_extra_sounds_folder`: Local path to additional sound files to copy into Asterisk container (optional)
-- `super_user_override_prefix`: Prefix for bypassing time restrictions (optional) - if set, allows calling extensions regardless of allowed hours by prefixing the extension with this value (e.g., if set to "23", dialing 23101 will call extension 101 bypassing time restrictions)
+- `telefonefix_public_ip`: Your server's public IP (**required**)
+- `telefonefix_asterisk_phone_user`: SIP extension (default: `6001`)
+- `telefonefix_asterisk_phone_password`: SIP password (**required**)
+- `telefonefix_twilio_domaine`: Twilio SIP domain (**required**)
+- `telefonefix_twilio_phone_number`: Your Twilio number (**required**)
+- `telefonefix_twilio_user`: Twilio SIP username (**required**)
+- `telefonefix_twilio_password`: Twilio SIP password (**required**)
+- `telefonefix_asterisk_extra_sounds_folder`: Local path to additional sound files to copy into Asterisk container (optional)
+- `telefonefix_super_user_override_prefix`: Prefix for bypassing time restrictions (optional) - if set, allows calling extensions regardless of allowed hours by prefixing the extension with this value (e.g., if set to "23", dialing 23101 will call extension 101 bypassing time restrictions)
 
 ### HT801 Configuration Task (`ht801.yml`)
 
@@ -116,10 +116,10 @@ Configures the HT801's FTX port
 
 **Key Variables:**
 - `ht801_password`: Admin password for HT801 (**required**)
-- `ht801_primary_sip_server`: Primary SIP server (default: `gateway_ip`)
-- `ht801_sip_user_id`: SIP user ID (default: `asterisk_phone_user`)
-- `ht801_sip_authenticate_id`: SIP auth ID (default: `asterisk_phone_user`)
-- `ht801_sip_authentication_password`: SIP password (default: `asterisk_phone_password`)
+- `ht801_primary_sip_server`: Primary SIP server (default: `telefonefix_gateway_ip`)
+- `ht801_sip_user_id`: SIP user ID (default: `telefonefix_asterisk_phone_user`)
+- `ht801_sip_authenticate_id`: SIP auth ID (default: `telefonefix_asterisk_phone_user`)
+- `ht801_sip_authentication_password`: SIP password (default: `telefonefix_asterisk_phone_password`)
 
 ### Asterisk Playbacks Generate Task (`asterisk_playbacks_generate.yml`)
 
@@ -127,13 +127,13 @@ Generates custom TTS audio playbacks for Asterisk based on extension configurati
 
 **Key Variables:**
 
-- `asterisk_playback_patterns`: Text patterns for different call scenarios (**required**)
+- `telefonefix_asterisk_playback_patterns`: Text patterns for different call scenarios (**required**)
 - Extension configuration file (YAML format) containing contact names and languages (**required**)
 
-**Example `asterisk_playback_patterns` configuration:**
+**Example `telefonefix_asterisk_playback_patterns` configuration:**
 
 ```yaml
-asterisk_playback_patterns:
+telefonefix_asterisk_playback_patterns:
   connecting:
     en: "Connecting you to ${contact_name}"
     fr: "Connexion vers ${contact_name}"

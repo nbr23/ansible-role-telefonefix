@@ -34,7 +34,7 @@
   set_fact:
     ht801_config:
       account_active: "{{ ht801_account_active | default('1') }}"
-      primary_sip_server: "{{ ht801_primary_sip_server | default(gateway_ip) }}"
+      primary_sip_server: "{{ ht801_primary_sip_server | default(telefonefix_gateway_ip) }}"
       failover_sip_server: "{{ ht801_failover_sip_server | default('') }}"
       prefer_primary_sip_server: "{{ ht801_prefer_primary_sip_server | default('0') }}"
       outbound_proxy: "{{ ht801_outbound_proxy | default('') }}"
@@ -42,9 +42,9 @@
       prefer_primary_outbound_proxy: "{{ ht801_prefer_primary_outbound_proxy | default('0') }}"
       from_domain: "{{ ht801_from_domain | default('') }}"
       allow_dhcp_option_120_to_override_sip_server: "{{ ht801_allow_dhcp_option_120_to_override_sip_server | default('0') }}"
-      sip_user_id: "{{ ht801_sip_user_id | default(asterisk_phone_user) }}"
-      sip_authenticate_id: "{{ ht801_sip_authenticate_id | default(asterisk_phone_user) }}"
-      sip_authentication_password: "{{ ht801_sip_authentication_password | default(asterisk_phone_password) }}"
+      sip_user_id: "{{ ht801_sip_user_id | default(telefonefix_asterisk_phone_user) }}"
+      sip_authenticate_id: "{{ ht801_sip_authenticate_id | default(telefonefix_asterisk_phone_user) }}"
+      sip_authentication_password: "{{ ht801_sip_authentication_password | default(telefonefix_asterisk_phone_password) }}"
       name: "{{ ht801_name | default('') }}"
       tel_uri: "{{ ht801_tel_uri | default('0') }}"
       layer_3_qos_sip_dscp: "{{ ht801_layer_3_qos_sip_dscp | default('26') }}"

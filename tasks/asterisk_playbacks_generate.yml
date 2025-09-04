@@ -25,7 +25,7 @@
 
     - name: Create local sounds directory structure
       file:
-        path: "{{ asterisk_extra_sounds_folder }}/{{ extension.value.ext }}"
+        path: "{{ telefonefix_asterisk_extra_sounds_folder }}/{{ extension.value.ext }}"
         state: directory
         mode: '0755'
       loop: "{{ allo_wed_config.extensions | dict2items }}"
@@ -35,11 +35,11 @@
 
     - name: Start TTS API container locally
       docker_container:
-        name: "{{ tts_container_name }}"
+        name: "{{ telefonefix_tts_container_name }}"
         image: nbr23/gopipertts:latest
         state: started
         ports:
-          - "{{ tts_container_port }}:8080"
+          - "{{ telefonefix_tts_container_port }}:8080"
         volumes:
           - ".voices:/voices"
         pull: true
@@ -48,7 +48,7 @@
 
     - name: Wait for TTS API to be ready
       uri:
-        url: "http://localhost:{{ tts_container_port }}/api/tts?voice=en_US-amy-low&speed=1.0&text=test"
+        url: "http://localhost:{{ telefonefix_tts_container_port }}/api/tts?voice=en_US-amy-low&speed=1.0&text=test"
         method: GET
         status_code: 200
       register: health_check
@@ -68,11 +68,11 @@
     - name: Generate audio files for each extension and pattern combination
       command: >
         uv run --script /tmp/tts_generator.py
-        -v "{{ voice_map[extension.value.language] | default(voice_map.en) }}"
-        -u "http://localhost:{{ tts_container_port }}"
-        -o "{{ asterisk_extra_sounds_folder }}/{{ extension.value.ext }}/{{ pattern.key }}"
+        -v "{{ telefonefix_voice_map[extension.value.language] | default(telefonefix_voice_map.en) }}"
+        -u "http://localhost:{{ telefonefix_tts_container_port }}"
+        -o "{{ telefonefix_asterisk_extra_sounds_folder }}/{{ extension.value.ext }}/{{ pattern.key }}"
         "{{ pattern.value[extension.value.language] | default(pattern.value.en) | replace('${contact_name}', extension.value.contact_name | default(extension.value.ext)) }}"
-      loop: "{{ allo_wed_config.extensions | dict2items | product(asterisk_playback_patterns | dict2items) | list }}"
+      loop: "{{ allo_wed_config.extensions | dict2items | product(telefonefix_asterisk_playback_patterns | dict2items) | list }}"
       loop_control:
         loop_var: item
       vars:
@@ -84,13 +84,13 @@
 
     - name: Display generation summary
       debug:
-        msg: "Generated {{ tts_generation_results.results | length }} TTS files in {{ asterisk_extra_sounds_folder }}/"
+        msg: "Generated {{ tts_generation_results.results | length }} TTS files in {{ telefonefix_asterisk_extra_sounds_folder }}/"
       delegate_to: localhost
 
   always:
     - name: Stop and remove TTS container
       docker_container:
-        name: "{{ tts_container_name }}"
+        name: "{{ telefonefix_tts_container_name }}"
         state: absent
       ignore_errors: yes
       delegate_to: localhost

@@ -15,23 +15,23 @@
 
 - name: Configure ethernet interface with DHCP server
   copy:
-    dest: "/etc/systemd/network/10-{{ ethernet_interface }}.network"
+    dest: "/etc/systemd/network/10-{{ telefonefix_ethernet_interface }}.network"
     owner: root
     group: root
     mode: '0644'
     content: |
       [Match]
-      Name={{ ethernet_interface }}
+      Name={{ telefonefix_ethernet_interface }}
 
       [Network]
-      Address={{ gateway_ip }}/{{ network_subnet.split('/')[1] }}
+      Address={{ telefonefix_gateway_ip }}/{{ telefonefix_network_subnet.split('/')[1] }}
       DHCPServer=yes
 
       [DHCPServer]
-      PoolOffset={{ dhcp_pool_start_offset }}
-      PoolSize={{ dhcp_pool_size }}
+      PoolOffset={{ telefonefix_dhcp_pool_start_offset }}
+      PoolSize={{ telefonefix_dhcp_pool_size }}
       DefaultLeaseTimeSec=43200
-      {% for dns in dns_servers %}
+      {% for dns in telefonefix_dns_servers %}
       DNS={{ dns }}
       {% endfor %}
 
@@ -57,7 +57,7 @@
     timeout: 10
 
 - name: Display network configuration
-  command: ip addr show {{ ethernet_interface }}
+  command: ip addr show {{ telefonefix_ethernet_interface }}
   register: interface_config
   changed_when: false
 

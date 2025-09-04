@@ -1,39 +1,39 @@
 ---
 # Network configuration for Raspberry Pi DHCP server
-network_subnet: "192.168.100.0/24"
-gateway_ip: "192.168.100.1"
-dhcp_pool_start_offset: 10
-dhcp_pool_size: 40
+telefonefix_network_subnet: "192.168.100.0/24"
+telefonefix_gateway_ip: "192.168.100.1"
+telefonefix_dhcp_pool_start_offset: 10
+telefonefix_dhcp_pool_size: 40
 
 # HT801 device configuration - REQUIRED: Set these values for your device
 ht801_mac: ""
 ht801_static_ip: ""
 
 # DNS servers for DHCP clients
-dns_servers:
+telefonefix_dns_servers:
   - "8.8.8.8"
   - "8.8.4.4"
 
 # Network interface to configure
-ethernet_interface: "eth0"
+telefonefix_ethernet_interface: "eth0"
 
 # Asterisk configuration - REQUIRED: Set these values for your setup
-public_ip: ""
-asterisk_phone_user: "6001"
-asterisk_phone_password: ""
-twilio_domaine: ""
-twilio_phone_number: ""
-twilio_user: ""
-twilio_password: ""
+telefonefix_public_ip: ""
+telefonefix_asterisk_phone_user: "6001"
+telefonefix_asterisk_phone_password: ""
+telefonefix_twilio_domaine: ""
+telefonefix_twilio_phone_number: ""
+telefonefix_twilio_user: ""
+telefonefix_twilio_password: ""
 
 # Asterisk configuration files to mount in container
-mounted_config_files:
+telefonefix_mounted_config_files:
   - pjsip.conf
   - rtp.conf
   - extensions.conf
 
 # TTS Playback generation configuration
-asterisk_playback_patterns:
+telefonefix_asterisk_playback_patterns:
   connecting:
     en: "Connecting you to ${contact_name}"
     fr: "Connexion vers ${contact_name}"
@@ -48,15 +48,15 @@ asterisk_playback_patterns:
     fr: "${contact_name} n'est pas disponible"
 
 # Voice mapping for different languages
-voice_map:
+telefonefix_voice_map:
   en: "en_US-amy-low"
   fr: "fr_FR-siwis-low"
   pt: "pt_BR-cadu-medium"
 
 # TTS container configuration
-tts_container_name: "telefonefix-tts-temp"
-tts_container_port: 8080
+telefonefix_tts_container_name: "telefonefix-tts-temp"
+telefonefix_tts_container_port: 8080
 
 # Super user override prefix (optional) - if set, allows bypassing time restrictions
 # Example: if set to "23", dialing 23101 will call extension 101 regardless of allowed hours
-# super_user_override_prefix: "23"
+# telefonefix_super_user_override_prefix: "23"
