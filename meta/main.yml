@@ -1,0 +1,10 @@
+galaxy_info:
+  author: nbr23
+  description: ''
+  license: MIT
+
+  min_ansible_version: 2.9
+
+  galaxy_tags: []
+
+dependencies: []
