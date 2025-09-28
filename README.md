@@ -1,6 +1,6 @@
 # ansible-role-telefonefix
 
-Setup ansible role for [téléfonefix](https://wip.tf/posts/telefonefix/)
+Setup ansible role for [téléfonefix](https://wip.tf/posts/telefonefix-building-babys-first-international-landline/)
 
 This Ansible role sets up a Raspberry Pi (or alike) as a DHCP server, deploys Asterisk with Twilio integration, and configures an HT801 analogue telephone adapter to connect to Asterisk. The role includes three main tasks described below.
 
